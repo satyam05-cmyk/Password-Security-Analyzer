@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Analyze your password's strength with entropy calculation, pattern detection, crack time estimation, and actionable improvement tips. Runs entirely in your browser — nothing is sent anywhere.">
+  <meta name="keywords" content="password strength, password analyzer, security, entropy, crack time, password checker">
+  <meta property="og:title" content="Password Security Analyzer">
+  <meta property="og:description" content="Deep password analysis: entropy, pattern detection, crack time estimation, and improvement suggestions. 100% private — runs entirely in your browser.">
+  <meta property="og:type" content="website">
+  <title>Password Security Analyzer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Hero Section -->
+    <header class="hero">
+      <div class="hero__icon" aria-hidden="true">🔒</div>
+      <h1 class="hero__title">Password Security Analyzer</h1>
+      <p class="hero__subtitle">
+        Enter any password below to get a detailed security breakdown. Entropy, pattern detection, estimated crack times, and suggestions to make it stronger. Everything runs locally in your browser.
+      </p>
+    </header>
+
+    <!-- Input Section -->
+    <section class="input-section" aria-label="Password Input">
+      <div class="input-wrapper">
+        <input
+          type="password"
+          id="password-input"
+          class="password-input"
+          placeholder="Enter a password to analyze..."
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Password to analyze"
+        >
+        <button class="toggle-visibility" id="toggle-visibility" type="button" aria-label="Toggle password visibility">
+          👁️
+        </button>
+      </div>
+
+      <!-- Mini strength bar -->
+      <div class="mini-strength-bar" aria-hidden="true">
+        <div class="mini-strength-bar__fill" id="mini-strength-fill"></div>
+      </div>
+
+      <!-- Input metadata -->
+      <div class="input-meta">
+        <span class="char-count" id="char-count">0 characters</span>
+        <div class="charset-pills">
+          <span class="charset-pill" id="pill-lower" data-tooltip="Lowercase a-z">az</span>
+          <span class="charset-pill" id="pill-upper" data-tooltip="Uppercase A-Z">AZ</span>
+          <span class="charset-pill" id="pill-digit" data-tooltip="Digits 0-9">09</span>
+          <span class="charset-pill" id="pill-symbol" data-tooltip="Symbols !@#$">!@</span>
+        </div>
+      </div>
+
+      <!-- Analyze button -->
+      <button class="analyze-btn" id="analyze-btn" type="button" disabled>
+        <span class="btn-text">Analyze Password</span>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results" id="results" aria-label="Analysis Results">
+
+      <!-- 1. Score Card -->
+      <div class="card score-card" id="card-score">
+        <div class="score-ring" id="score-ring">
+          <svg viewBox="0 0 170 170">
+            <circle class="score-ring__bg" cx="85" cy="85" r="80"></circle>
+            <circle class="score-ring__fill" id="score-ring-fill" cx="85" cy="85" r="80"></circle>
+          </svg>
+          <div class="score-value">
+            <span class="score-number" id="score-number">0</span>
+            <span class="score-max">/ 100</span>
+          </div>
+        </div>
+        <div class="score-label" id="score-label">Analyzing...</div>
+        <div class="score-password" id="score-password"></div>
+      </div>
+
+      <!-- 2. Score Breakdown -->
+      <div class="card" id="card-breakdown">
+        <div class="card__header">
+          <div class="card__icon card__icon--cyan">📊</div>
+          <div class="card__title">Score Breakdown</div>
+        </div>
+        <table class="breakdown-table" id="breakdown-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Points</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody id="breakdown-tbody">
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 3. Entropy Card -->
+      <div class="card" id="card-entropy">
+        <div class="card__header">
+          <div class="card__icon card__icon--purple">🎲</div>
+          <div class="card__title">Entropy Analysis</div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Brute-force Entropy</span>
+          <span class="stat-value" id="brute-entropy-value">--</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Shannon Entropy</span>
+          <span class="stat-value" id="shannon-entropy-value">--</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Unique Characters</span>
+          <span class="stat-value" id="unique-chars-value">--</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Search Space</span>
+          <span class="stat-value" id="search-space-value">--</span>
+        </div>
+        <div class="entropy-bar" aria-label="Entropy strength visualization">
+          <div class="entropy-bar__fill" id="entropy-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- 4. Charset Card -->
+      <div class="card" id="card-charset">
+        <div class="card__header">
+          <div class="card__icon card__icon--green">🔤</div>
+          <div class="card__title">Character Set Analysis</div>
+        </div>
+        <div class="charset-grid" id="charset-grid">
+          <div class="charset-item" id="cs-lowercase">
+            <div class="charset-item__indicator"></div>
+            <div>
+              <div class="charset-item__name">Lowercase (a-z)</div>
+              <div class="charset-item__pool">Pool: 26</div>
+            </div>
+          </div>
+          <div class="charset-item" id="cs-uppercase">
+            <div class="charset-item__indicator"></div>
+            <div>
+              <div class="charset-item__name">Uppercase (A-Z)</div>
+              <div class="charset-item__pool">Pool: 26</div>
+            </div>
+          </div>
+          <div class="charset-item" id="cs-digits">
+            <div class="charset-item__indicator"></div>
+            <div>
+              <div class="charset-item__name">Digits (0-9)</div>
+              <div class="charset-item__pool">Pool: 10</div>
+            </div>
+          </div>
+          <div class="charset-item" id="cs-symbols">
+            <div class="charset-item__indicator"></div>
+            <div>
+              <div class="charset-item__name">Symbols (!@#$)</div>
+              <div class="charset-item__pool">Pool: 32</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Crack Time Card -->
+      <div class="card" id="card-cracktime">
+        <div class="card__header">
+          <div class="card__icon card__icon--amber">⏱️</div>
+          <div class="card__title">Estimated Crack Time</div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Online Throttled (100/sec)</span>
+          <span class="stat-value" id="ct-online-throttled">--</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Online Unthrottled (10K/sec)</span>
+          <span class="stat-value" id="ct-online-unthrottled">--</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Offline Bcrypt (10K/sec)</span>
+          <span class="stat-value" id="ct-offline-bcrypt">--</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Offline MD5 (10B/sec)</span>
+          <span class="stat-value" id="ct-offline-md5">--</span>
+        </div>
+      </div>
+
+      <!-- 6. Weaknesses Card -->
+      <div class="card" id="card-weaknesses">
+        <div class="card__header">
+          <div class="card__icon card__icon--red">⚠️</div>
+          <div class="card__title">Weaknesses Found</div>
+        </div>
+        <ul class="weakness-list" id="weakness-list">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+
+      <!-- 7. Suggestions Card -->
+      <div class="card" id="card-suggestions">
+        <div class="card__header">
+          <div class="card__icon card__icon--cyan">💡</div>
+          <div class="card__title">How to Improve</div>
+        </div>
+        <ol class="suggestion-list" id="suggestion-list">
+          <!-- Dynamically populated -->
+        </ol>
+        <div class="passphrase-box" id="passphrase-box">
+          <div class="passphrase-box__label">Try a Passphrase Instead</div>
+          <div class="passphrase-box__value" id="passphrase-value">--</div>
+          <div class="passphrase-box__entropy" id="passphrase-entropy">--</div>
+          <button class="passphrase-box__copy" id="copy-passphrase" type="button">Copy</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Privacy Badge -->
+    <div class="privacy-badge">
+      <span class="privacy-badge__icon">🔒</span>
+      <span>100% client-side. Your password never leaves this browser.</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Password Security Analyzer &middot; All analysis runs locally in your browser &middot; No data is transmitted</p>
+    </footer>
+
+  </div>
+
+  <!-- Copy feedback toast -->
+  <div class="copy-feedback" id="copy-feedback">Copied to clipboard</div>
+
+  <!-- Scripts (ES6 modules) -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
